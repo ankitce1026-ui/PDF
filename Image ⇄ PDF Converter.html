@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Image ⇄ PDF Converter</title>
+<style>
+:root{--bg:#f6f7f9;--card:#fff;--tx:#1b2430;--mu:#5d6b7c;--bd:#d9dee5;--ac:#0b5cab;--ok:#1a7f45;--er:#c0392b;--in:#fff;color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#12171d;--card:#1b222b;--tx:#e6ebf1;--mu:#94a3b5;--bd:#2e3947;--ac:#5aa8f0;--ok:#4cc98a;--er:#ff7b6b;--in:#10151b;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#12171d;--card:#1b222b;--tx:#e6ebf1;--mu:#94a3b5;--bd:#2e3947;--ac:#5aa8f0;--ok:#4cc98a;--er:#ff7b6b;--in:#10151b;color-scheme:dark}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--tx);font:14px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif}
+.w{max-width:960px;margin:0 auto;padding:16px}h1{font-size:20px;margin:0}.sub{color:var(--mu);margin:2px 0 14px}
+.tabs{display:flex;gap:6px;margin-bottom:12px}.tabs button{flex:1;background:var(--card);color:var(--tx);border:1px solid var(--bd)}.tabs button.on{background:var(--ac);color:#fff;border-color:var(--ac)}
+.c{background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:14px;margin-bottom:14px}
+.drop{border:2px dashed var(--bd);border-radius:10px;padding:22px;text-align:center;color:var(--mu);cursor:pointer}.drop.hv{border-color:var(--ac);color:var(--ac)}
+.f{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin-top:12px}
+label{display:flex;flex-direction:column;font-size:12px;color:var(--mu);gap:3px}
+input,select,button{font:inherit;color:var(--tx);background:var(--in);border:1px solid var(--bd);border-radius:6px;padding:7px 9px;min-width:0;width:100%}
+button{cursor:pointer;width:auto}button.p{background:var(--ac);color:#fff;border-color:var(--ac)}button:disabled{opacity:.5;cursor:default}button.s{padding:3px 8px;font-size:12px}
+.bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:12px}
+.list{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin-top:12px}
+.it{border:1px solid var(--bd);border-radius:8px;padding:6px;background:var(--bg);display:flex;flex-direction:column;gap:4px;align-items:center}
+.it .th{width:100%;height:100px;display:flex;align-items:center;justify-content:center;overflow:hidden}.it img{max-width:100%;max-height:100px;transition:transform .15s}
+.it .nm{font-size:11px;color:var(--mu);width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:center}.it .bt{display:flex;gap:3px;flex-wrap:wrap;justify-content:center}
+.msg{margin-top:10px;padding:8px 10px;border-left:3px solid var(--ac);background:var(--bg);font-size:13px;white-space:pre-wrap}.msg.er{border-color:var(--er);color:var(--er)}.msg.ok{border-color:var(--ok)}
+.hide{display:none}.n{color:var(--mu);font-size:12px}
+progress{width:100%;height:8px}
+</style></head><body><div class="w">
+<h1>Image ⇄ PDF Converter</h1>
+<p class="sub">Runs entirely in your browser – files are never uploaded.</p>
+<div class="tabs"><button id="t1" class="on" onclick="tab(1)">Images → PDF</button><button id="t2" onclick="tab(2)">PDF → Images</button></div>
+
+<div id="p1" class="c">
+<div class="drop" id="d1" onclick="$('f1').click()">Drop images here or click to choose (JPG, PNG, WebP, GIF, BMP, SVG…)<br><span class="n">Select several to combine them into one PDF</span></div>
+<input id="f1" type="file" accept="image/*" multiple class="hide">
+<div class="list" id="l1"></div>
+<div class="f">
+<label>Page size<select id="ps"><option value="A4">A4</option><option value="A3">A3</option><option value="A5">A5</option><option value="Letter">Letter</option><option value="Legal">Legal</option><option value="fit">Fit to image</option></select></label>
+<label>Orientation<select id="or"><option value="auto">Auto (match image)</option><option value="p">Portrait</option><option value="l">Landscape</option></select></label>
+<label>Margin (mm)<input id="mg" type="number" min="0" max="50" step="1" value="10"></label>
+<label>Max image size<select id="mx"><option value="0">Original</option><option value="4000">4000 px</option><option value="3000">3000 px</option><option value="2000">2000 px</option><option value="1500">1500 px</option></select></label>
+<label>JPEG quality (re-encoded images)<select id="q1"><option value=".95">High</option><option value=".85" selected>Good</option><option value=".7">Smaller</option></select></label>
+<label id="dpiw" class="hide">DPI for “Fit to image”<input id="dpi" type="number" min="36" max="600" value="150"></label>
+<label>PDF title (optional)<input id="ti" type="text" maxlength="100"></label>
+<label>File name<input id="fn" type="text" value="images.pdf"></label></div>
+<div class="bar"><button class="p" id="go1" onclick="makePdf()" disabled>Create PDF</button><button onclick="clr()">Clear all</button><span class="n" id="cnt"></span></div>
+<progress id="pg1" class="hide" max="1" value="0"></progress><div id="m1"></div></div>
+
+<div id="p2" class="c hide">
+<div class="drop" id="d2" onclick="$('f2').click()">Drop a PDF here or click to choose</div>
+<input id="f2" type="file" accept="application/pdf,.pdf" class="hide">
+<div class="f">
+<label>Format<select id="fm"><option value="png">PNG</option><option value="jpeg">JPG</option></select></label>
+<label>Resolution<select id="rs"><option value="72">72 DPI (screen)</option><option value="150" selected>150 DPI</option><option value="200">200 DPI</option><option value="300">300 DPI (print)</option></select></label>
+<label>Pages (e.g. 1-3,5 or all)<input id="rg" type="text" value="all"></label>
+<label>JPG quality<select id="q2"><option value=".95">High</option><option value=".85" selected>Good</option><option value=".7">Smaller</option></select></label>
+<label id="pww" class="hide">Password<input id="pw" type="password" autocomplete="off"></label></div>
+<div class="bar"><button class="p" id="go2" onclick="pdfToImg()" disabled>Convert</button><button id="zp" class="hide" onclick="saveZip()">Save all as ZIP</button><span class="n" id="inf2"></span></div>
+<progress id="pg2" class="hide" max="1" value="0"></progress><div id="m2"></div><div class="list" id="l2"></div></div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js"></script>
+<script id="core">
+const enc=new TextEncoder();
+function concat(a){let n=0;for(const x of a)n+=x.length;const o=new Uint8Array(n);let p=0;for(const x of a){o.set(x,p);p+=x.length}return o}
+function exifOri(dv,t,end){try{const le=dv.getUint16(t)===0x4949,g16=p=>dv.getUint16(p,le),g32=p=>dv.getUint32(p,le);if(g16(t+2)!==42)return 1;const p=t+g32(t+4),n=g16(p);for(let k=0;k<n;k++){const e=p+2+k*12;if(e+12>end)break;if(g16(e)===0x0112)return g16(e+8)}}catch(x){}return 1}
+function parseJpeg(u){if(u.length<4||u[0]!==0xFF||u[1]!==0xD8)return null;const dv=new DataView(u.buffer,u.byteOffset,u.byteLength);let i=2,o=1;
+while(i+4<=u.length){if(u[i]!==0xFF){i++;continue}const m=u[i+1];if(m===0xFF){i++;continue}
+if(m===0xD8||m===0x01||(m>=0xD0&&m<=0xD7)){i+=2;continue}if(m===0xD9||m===0xDA)break;const len=dv.getUint16(i+2);
+if(m===0xE1&&len>=16&&u[i+4]===0x45&&u[i+5]===0x78&&u[i+6]===0x69&&u[i+7]===0x66)o=exifOri(dv,i+10,i+2+len);
+if(m>=0xC0&&m<=0xCF&&m!==0xC4&&m!==0xC8&&m!==0xCC)return{p:u[i+4],h:dv.getUint16(i+5),w:dv.getUint16(i+7),c:u[i+9],o};
+i+=2+len}return null}
+function buildPdf(pages,title){const ch=[],xr=[];let off=0;const put=x=>{const b=typeof x==="string"?enc.encode(x):x;ch.push(b);off+=b.length};
+const nf=v=>String(+v.toFixed(3)),esc=s=>String(s).replace(/[^\x20-\x7E]/g,"?").replace(/([\\()])/g,"\\$1");
+const obj=(n,body)=>{xr[n]=off;put(n+" 0 obj\n"+body+"\nendobj\n")};
+put("%PDF-1.4\n");put(new Uint8Array([0x25,0xE2,0xE3,0xCF,0xD3,0x0A]));
+const N=pages.length,d=new Date(),z=v=>String(v).padStart(2,"0");
+obj(1,"<< /Type /Catalog /Pages 2 0 R >>");
+obj(2,"<< /Type /Pages /Kids ["+pages.map((_,i)=>(4+3*i)+" 0 R").join(" ")+"] /Count "+N+" >>");
+obj(3,"<< /Title ("+esc(title||"Images")+") /Producer (Image-PDF Converter) /CreationDate (D:"+d.getUTCFullYear()+z(d.getUTCMonth()+1)+z(d.getUTCDate())+z(d.getUTCHours())+z(d.getUTCMinutes())+z(d.getUTCSeconds())+"Z) >>");
+pages.forEach((p,i)=>{const a=4+3*i,c=a+1,m=a+2,cs=p.img.c===1?"/DeviceGray":"/DeviceRGB";
+obj(a,"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 "+nf(p.pw)+" "+nf(p.ph)+"] /Resources << /XObject << /Im0 "+m+" 0 R >> /ProcSet [/PDF /ImageB /ImageC] >> /Contents "+c+" 0 R >>");
+const s="q "+nf(p.dw)+" 0 0 "+nf(p.dh)+" "+nf(p.x)+" "+nf(p.y)+" cm /Im0 Do Q\n";obj(c,"<< /Length "+s.length+" >>\nstream\n"+s+"endstream");
+xr[m]=off;put(m+" 0 obj\n<< /Type /XObject /Subtype /Image /Width "+p.img.w+" /Height "+p.img.h+" /ColorSpace "+cs+" /BitsPerComponent 8 /Filter /DCTDecode /Length "+p.img.d.length+" >>\nstream\n");put(p.img.d);put("\nendstream\nendobj\n")});
+const sx=off,T=3*N+4;let x="xref\n0 "+T+"\n0000000000 65535 f \n";for(let n=1;n<T;n++)x+=String(xr[n]).padStart(10,"0")+" 00000 n \n";
+put(x+"trailer\n<< /Size "+T+" /Root 1 0 R /Info 3 0 R >>\nstartxref\n"+sx+"\n%%EOF\n");return concat(ch)}
+const CT=(()=>{const t=new Uint32Array(256);for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=c&1?0xEDB88320^(c>>>1):c>>>1;t[n]=c>>>0}return t})();
+function crc32(u){let c=0xFFFFFFFF;for(let i=0;i<u.length;i++)c=CT[(c^u[i])&255]^(c>>>8);return(c^0xFFFFFFFF)>>>0}
+function buildZip(files){const d=new Date(),dt=((d.getFullYear()-1980)<<9)|((d.getMonth()+1)<<5)|d.getDate(),tm=(d.getHours()<<11)|(d.getMinutes()<<5)|(d.getSeconds()>>1),parts=[],cen=[];let off=0;
+for(const f of files){const nm=enc.encode(f.name),crc=crc32(f.data),sz=f.data.length;
+const l=new DataView(new ArrayBuffer(30));l.setUint32(0,0x04034b50,true);l.setUint16(4,20,true);l.setUint16(6,0x0800,true);l.setUint16(10,tm,true);l.setUint16(12,dt,true);l.setUint32(14,crc,true);l.setUint32(18,sz,true);l.setUint32(22,sz,true);l.setUint16(26,nm.length,true);
+parts.push(new Uint8Array(l.buffer),nm,f.data);
+const c=new DataView(new ArrayBuffer(46));c.setUint32(0,0x02014b50,true);c.setUint16(4,20,true);c.setUint16(6,20,true);c.setUint16(8,0x0800,true);c.setUint16(12,tm,true);c.setUint16(14,dt,true);c.setUint32(16,crc,true);c.setUint32(20,sz,true);c.setUint32(24,sz,true);c.setUint16(28,nm.length,true);c.setUint32(42,off,true);
+cen.push(new Uint8Array(c.buffer),nm);off+=30+nm.length+sz}
+let cl=0;for(const x of cen)cl+=x.length;const e=new DataView(new ArrayBuffer(22));e.setUint32(0,0x06054b50,true);e.setUint16(8,files.length,true);e.setUint16(10,files.length,true);e.setUint32(12,cl,true);e.setUint32(16,off,true);
+return concat([...parts,...cen,new Uint8Array(e.buffer)])}
+function parseRange(s,n){s=(s||"").trim().toLowerCase();if(!s||s==="all")return Array.from({length:n},(_,i)=>i+1);const out=new Set();
+for(const part of s.split(",")){const t=part.trim();if(!t)continue;const m=/^(\d+)(?:\s*-\s*(\d+))?$/.exec(t);if(!m)throw new Error("Invalid page range: “"+t+"”");let a=+m[1],b=m[2]?+m[2]:a;if(a>b)[a,b]=[b,a];if(a<1||b>n)throw new Error("Pages must be between 1 and "+n);for(let i=a;i<=b;i++)out.add(i)}
+if(!out.size)throw new Error("No pages selected");return[...out].sort((a,b)=>a-b)}
+</script>
+<script>
+const $=i=>document.getElementById(i);let ITEMS=[],uid=0,PAGES=[],PBASE="document",PDFBUF=null;
+const SZ={A4:[595.28,841.89],A3:[841.89,1190.55],A5:[419.53,595.28],Letter:[612,792],Legal:[612,1008]};
+function tab(n){$("p1").classList.toggle("hide",n!=1);$("p2").classList.toggle("hide",n!=2);$("t1").classList.toggle("on",n==1);$("t2").classList.toggle("on",n==2)}
+function msg(id,t,k){$(id).innerHTML=t?`<div class="msg ${k||""}"></div>`:"";if(t)$(id).firstChild.textContent=t}
+async function saveFile(name,blob){let dl=null;try{dl=await claude.use("downloads")}catch(e){}
+if(dl){try{await dl.save({filename:name,data:blob});return"saved"}catch(e){if(e&&e.code==="declined")return"declined";if(e&&e.code!=="unavailable"&&e.code!=="not_granted")throw new Error("Save failed: "+(e.message||e.code))}}
+const u=URL.createObjectURL(blob),a=document.createElement("a");a.href=u;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),60000);return"saved"}
+const readUrl=f=>new Promise((ok,no)=>{const r=new FileReader();r.onload=()=>ok(r.result);r.onerror=()=>no(new Error("Cannot read "+f.name));r.readAsDataURL(f)});
+const readBuf=f=>new Promise((ok,no)=>{const r=new FileReader();r.onload=()=>ok(r.result);r.onerror=()=>no(new Error("Cannot read "+f.name));r.readAsArrayBuffer(f)});
+async function loadImg(f){const u=await readUrl(f);return await new Promise((ok,no)=>{const i=new Image();i.onload=()=>(i.naturalWidth>0?ok(i):no(new Error("Image has no size: "+f.name)));i.onerror=()=>no(new Error("Cannot decode "+f.name+" (unsupported format?)"));i.src=u})}
+function drop(el,fn){["dragenter","dragover"].forEach(e=>el.addEventListener(e,x=>{x.preventDefault();el.classList.add("hv")}));["dragleave","drop"].forEach(e=>el.addEventListener(e,x=>{x.preventDefault();el.classList.remove("hv")}));el.addEventListener("drop",x=>fn([...x.dataTransfer.files]))}
+async function addFiles(fs){const bad=[];for(const f of fs){if(!(f.type.startsWith("image/")||/\.(jpe?g|png|webp|gif|bmp|svg|avif)$/i.test(f.name))){bad.push(f.name);continue}
+try{const im=await loadImg(f),c=document.createElement("canvas"),s=Math.min(1,160/Math.max(im.naturalWidth,im.naturalHeight));c.width=Math.max(1,Math.round(im.naturalWidth*s));c.height=Math.max(1,Math.round(im.naturalHeight*s));c.getContext("2d").drawImage(im,0,0,c.width,c.height);
+ITEMS.push({id:++uid,f,rot:0,th:c.toDataURL("image/jpeg",.7)})}catch(e){bad.push(f.name)}}
+renderItems();msg("m1",bad.length?"Skipped (not a readable image): "+bad.join(", "):"",bad.length?"er":"")}
+function renderItems(){const l=$("l1");l.innerHTML="";ITEMS.forEach((it,i)=>{const d=document.createElement("div");d.className="it";
+d.innerHTML=`<div class="th"><img alt="" style="transform:rotate(${it.rot*90}deg)"></div><div class="nm"></div><div class="bt"><button class="s" data-a="l">◀</button><button class="s" data-a="r">▶</button><button class="s" data-a="x">⟳</button><button class="s" data-a="d">✕</button></div>`;
+d.querySelector("img").src=it.th;d.querySelector(".nm").textContent=(i+1)+". "+it.f.name;
+d.querySelector(".bt").onclick=e=>{const a=e.target.dataset.a;if(!a)return;if(a=="l"&&i>0)[ITEMS[i-1],ITEMS[i]]=[ITEMS[i],ITEMS[i-1]];if(a=="r"&&i<ITEMS.length-1)[ITEMS[i+1],ITEMS[i]]=[ITEMS[i],ITEMS[i+1]];if(a=="x")it.rot=(it.rot+1)%4;if(a=="d")ITEMS.splice(i,1);renderItems()};l.appendChild(d)});
+$("go1").disabled=!ITEMS.length;$("cnt").textContent=ITEMS.length?ITEMS.length+" image(s) – use ◀ ▶ to reorder, ⟳ to rotate":""}
+function clr(){ITEMS=[];renderItems();msg("m1","")}
+$("f1").onchange=e=>{addFiles([...e.target.files]);e.target.value=""};drop($("d1"),addFiles);
+$("ps").onchange=()=>$("dpiw").classList.toggle("hide",$("ps").value!=="fit");
+async function toJpeg(f,rot,max,q){const im=await loadImg(f);let w=im.naturalWidth,h=im.naturalHeight,s=max>0?Math.min(1,max/Math.max(w,h)):1;
+for(let t=0;t<5;t++){const W=Math.max(1,Math.round(w*s)),H=Math.max(1,Math.round(h*s)),sw=rot%2?H:W,sh=rot%2?W:H,c=document.createElement("canvas");c.width=sw;c.height=sh;
+const x=c.getContext("2d");if(x){x.fillStyle="#fff";x.fillRect(0,0,sw,sh);x.translate(sw/2,sh/2);x.rotate(rot*Math.PI/2);x.drawImage(im,-W/2,-H/2,W,H);
+const b=await new Promise(r=>c.toBlob(r,"image/jpeg",q));if(b&&b.size>0){const d=new Uint8Array(await b.arrayBuffer());return{d,w:sw,h:sh,c:3}}}s*=.7}
+throw new Error("Image too large to process on this device: "+f.name)}
+async function makePdf(){const btn=$("go1"),pg=$("pg1");btn.disabled=true;msg("m1","");pg.classList.remove("hide");pg.max=ITEMS.length;pg.value=0;
+try{const max=+$("mx").value,q=+$("q1").value,ps=$("ps").value,orr=$("or").value,mg=Math.max(0,Math.min(50,+$("mg").value||0))*72/25.4,dpi=Math.max(36,+$("dpi").value||150),pages=[];let raw=0,enc2=0;
+for(let i=0;i<ITEMS.length;i++){const it=ITEMS[i];let img=null;
+if(it.rot===0&&(it.f.type==="image/jpeg"||/\.jpe?g$/i.test(it.f.name))){const u=new Uint8Array(await readBuf(it.f)),r=parseJpeg(u);
+if(r&&r.p===8&&(r.c===1||r.c===3)&&r.o===1&&r.w>0&&r.h>0&&(!max||Math.max(r.w,r.h)<=max)){img={d:u,w:r.w,h:r.h,c:r.c};raw++}}
+if(!img){img=await toJpeg(it.f,it.rot,max,q);enc2++}
+let pw,ph;if(ps==="fit"){pw=img.w*72/dpi+2*mg;ph=img.h*72/dpi+2*mg}else{[pw,ph]=SZ[ps];const land=orr==="l"||(orr==="auto"&&img.w>img.h);if(land!==(pw>ph))[pw,ph]=[ph,pw]}
+const cw=pw-2*mg,chh=ph-2*mg;if(cw<=0||chh<=0)throw new Error("Margin is too large for the page size.");
+const sc=Math.min(cw/img.w,chh/img.h),dw=img.w*sc,dh=img.h*sc;pages.push({pw,ph,dw,dh,x:(pw-dw)/2,y:(ph-dh)/2,img});pg.value=i+1;await new Promise(r=>setTimeout(r))}
+const out=buildPdf(pages,$("ti").value),blob=new Blob([out],{type:"application/pdf"});let name=($("fn").value||"images.pdf").trim().replace(/[\\/:*?"<>|]/g,"_");if(!/\.pdf$/i.test(name))name+=".pdf";
+const r=await saveFile(name,blob);msg("m1",(r==="declined"?"Save cancelled. ":"")+`PDF ready: ${pages.length} page(s), ${(blob.size/1048576).toFixed(2)} MB (${raw} JPEG(s) embedded without re-encoding, ${enc2} converted).`,"ok")}
+catch(e){msg("m1",e.message||String(e),"er")}finally{btn.disabled=!ITEMS.length;pg.classList.add("hide")}}
+
+/* ---------- PDF -> images ---------- */
+const lib=()=>window.pdfjsLib;
+function setupPdfjs(){if(!lib()){msg("m2","The PDF engine could not be loaded (check your connection). Images → PDF still works.","er");return false}
+lib().GlobalWorkerOptions.workerSrc="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";return true}
+async function pickPdf(fs){const f=fs.find(x=>x.type==="application/pdf"||/\.pdf$/i.test(x.name));if(!f){msg("m2","Please choose a PDF file.","er");return}
+try{PDFBUF=new Uint8Array(await readBuf(f));PBASE=f.name.replace(/\.pdf$/i,"")||"document";PAGES=[];$("l2").innerHTML="";$("zp").classList.add("hide");$("pww").classList.add("hide");
+$("inf2").textContent=f.name+" ("+(f.size/1048576).toFixed(2)+" MB)";msg("m2","");$("go2").disabled=false}catch(e){msg("m2",e.message,"er")}}
+$("f2").onchange=e=>{pickPdf([...e.target.files]);e.target.value=""};drop($("d2"),pickPdf);
+async function pdfToImg(){if(!PDFBUF||!setupPdfjs())return;const btn=$("go2"),pg=$("pg2");btn.disabled=true;msg("m2","");PAGES=[];$("l2").innerHTML="";$("zp").classList.add("hide");let doc=null;
+try{doc=await lib().getDocument({data:PDFBUF.slice(0),password:$("pw").value||undefined,isEvalSupported:false}).promise}catch(e){
+if(e&&e.name==="PasswordException"){$("pww").classList.remove("hide");msg("m2",e.code===2?"Wrong password – try again.":"This PDF is password-protected. Enter the password and press Convert.","er")}else msg("m2","Cannot open this PDF: "+(e&&e.message||e),"er");btn.disabled=false;return}
+try{const list=parseRange($("rg").value,doc.numPages),fmt=$("fm").value,ext=fmt==="png"?"png":"jpg",mime="image/"+fmt,q=+$("q2").value,s0=(+$("rs").value)/72,MAXPX=16e6;let reduced=false;pg.classList.remove("hide");pg.max=list.length;pg.value=0;
+for(let k=0;k<list.length;k++){const n=list[k],page=await doc.getPage(n);let s=s0,vp=page.getViewport({scale:s});
+if(vp.width*vp.height>MAXPX){s*=Math.sqrt(MAXPX/(vp.width*vp.height));vp=page.getViewport({scale:s});reduced=true}
+const c=document.createElement("canvas");c.width=Math.max(1,Math.floor(vp.width));c.height=Math.max(1,Math.floor(vp.height));const x=c.getContext("2d");x.fillStyle="#fff";x.fillRect(0,0,c.width,c.height);
+await page.render({canvasContext:x,viewport:vp}).promise;
+const blob=await new Promise(r=>c.toBlob(r,mime,q));if(!blob)throw new Error("Could not encode page "+n+" (image too large for this device).");
+const t=document.createElement("canvas"),ts=Math.min(1,160/Math.max(c.width,c.height));t.width=Math.max(1,Math.round(c.width*ts));t.height=Math.max(1,Math.round(c.height*ts));t.getContext("2d").drawImage(c,0,0,t.width,t.height);
+PAGES.push({n,name:`${PBASE}_page${String(n).padStart(String(doc.numPages).length,"0")}.${ext}`,blob,w:c.width,h:c.height,th:t.toDataURL("image/jpeg",.7)});page.cleanup();c.width=c.height=0;pg.value=k+1;await new Promise(r=>setTimeout(r))}
+const l=$("l2");PAGES.forEach((p,i)=>{const d=document.createElement("div");d.className="it";d.innerHTML=`<div class="th"><img alt=""></div><div class="nm"></div><button class="s">Save</button>`;d.querySelector("img").src=p.th;d.querySelector(".nm").textContent=`Page ${p.n} · ${p.w}×${p.h}`;
+d.querySelector("button").onclick=async()=>{try{await saveFile(p.name,p.blob)}catch(e){msg("m2",e.message,"er")}};l.appendChild(d)});
+$("zp").classList.toggle("hide",PAGES.length<2);msg("m2",`Done: ${PAGES.length} image(s).`+(reduced?" Some pages were scaled down to fit the browser’s canvas limit.":""),"ok")}
+catch(e){msg("m2",e.message||String(e),"er")}finally{btn.disabled=false;pg.classList.add("hide");try{doc.destroy()}catch(e){}}}
+async function saveZip(){try{const files=[];for(const p of PAGES)files.push({name:p.name,data:new Uint8Array(await p.blob.arrayBuffer())});await saveFile(PBASE+"_images.zip",new Blob([buildZip(files)],{type:"application/zip"}))}catch(e){msg("m2",e.message||String(e),"er")}}
+if(!lib())msg("m2","","");
+</script></body></html>
